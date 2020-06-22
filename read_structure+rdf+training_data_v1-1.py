@@ -85,6 +85,10 @@ for filename in INPUT_FILES:
 
     n = np.sum(atom_number)
     print(n)
+    if n > 100:
+        print(f"Processed {fileNumber} / {len(INPUT_FILES)} files. (Bypassed: n too large)")
+        fileNotUsed += 1
+        continue
     lattice_vector = lattice_vector.reshape((3,3))
     r = r.reshape((line - 9, 3))
 
@@ -177,12 +181,16 @@ print("Finished processing files")
 print(f"Crystal system distribution: {types}")
 print("Now preparing training data")
 
+fileNumber = 0
+
 for i in range(len(training_data)):
     for j in range(int(max(binNumber))):
         if len(training_data[i][0]) < max(binNumber):
             training_data[i][0] = np.append(training_data[i][0], 0)
         else:
             break
+    fileNumber += 1
+    print(f"Processed {fileNumber} / {len(training_data)} files")
 
 # for i in range(len(training_data)):
 # print(training_data[0][0], training_data[0][1])
