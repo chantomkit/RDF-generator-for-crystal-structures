@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from os import listdir
+from matplotlib import pyplot as plt
 
 INPUT_FILES = listdir("./INPUT")
 fileNumber = 0
@@ -104,15 +105,20 @@ for filename in INPUT_FILES:
     # For RDF
     # Macro definitions for spherical shells and bins
     neighbour_list = np.zeros((n, n))
-    ratio = 100
-    dr = lattice_cnst / ratio
     L = np.zeros(3)
     for i in range(3):
         L[i] = lattice_vector[i,0]**2 + lattice_vector[i,1]**2 + lattice_vector[i,2]**2
     diagonal = np.sum(lattice_vector, axis=0)
-    RMAX = math.sqrt(diagonal[0]**2 + diagonal[1]**2 + diagonal[2]**2)
-    RMIN = 0.005
-    binmax = int(RMAX / dr)
+    RMAX = np.linalg.norm(diagonal)
+    for i in L:
+        if RMAX ** 2 < i:
+            RMAX = float(np.sum(np.sqrt(L)))
+            break
+    RMIN = 0.0005
+    binmax = 1000
+    # ratio = 1000
+    dr = RMAX / binmax
+
     count = np.zeros((binmax,), dtype=int)
     g = np.zeros((binmax,), dtype=float)
 
@@ -121,7 +127,7 @@ for filename in INPUT_FILES:
         for j in range(i + 1, n):
             delta_r = np.zeros(3)
             for k in range(3):
-                delta_r[k] = r[i, k] - r[j, k]
+                delta_r[k] = r[j, k] - r[i, k]
                 while delta_r[k] >= 0.5:
                     delta_r[k] -= 1
                 while delta_r[k] < -0.5:
@@ -133,11 +139,15 @@ for filename in INPUT_FILES:
             # Classify into bins
     for i in range(0, n):
         for j in range(0, n):
-            for x in range(binmax):
-                R = float(RMIN + x * dr)
-                if neighbour_list[i, j] >= (R**2) and neighbour_list[i, j] < ((R + dr)**2):
-                    count[x] = count[x] + 1
-                    break
+            if i == j:
+                continue
+            if neighbour_list[i, j] <= RMAX:
+                count[int((neighbour_list[i, j] - RMIN) / dr)] += 1
+            # for x in range(binmax):
+            #     R = float(RMIN + x * dr)
+            #     if neighbour_list[i, j] >= R and neighbour_list[i, j] < (R + dr):
+            #         count[x] = count[x] + 1
+            #         break
 
     if np.linalg.norm(count) == 0:
         # print(count)
@@ -148,14 +158,12 @@ for filename in INPUT_FILES:
     for x in range(binmax):
         count_mod = 2 * count[x] / n
         g[x] = (L[0] * L[1] * L[2] / n) * (count_mod / (4 * math.pi * dr * (x * dr + RMIN)**2))
-    if np.linalg.norm(g) == 0:
-        # print(g)
-        print(f"Processed {fileNumber} / {len(INPUT_FILES)} files. (Bypassed: g = 0)")
-        fileNotUsed += 1
-        continue
     g = g / np.sum(g)
+    plt.plot(g)
+    plt.title(f"{spaceGroup}")
+    plt.savefig(f"OUTPUT/spgrp{spaceGroup}-graph{fileNumber}.png")
+    plt.clf()
     # print(np.sum(g))
-    binNumber = np.append(binNumber, len(g))
     # print(binNumber)
 
     if spaceGroup > 0 and spaceGroup <= 2:
@@ -184,10 +192,13 @@ for filename in INPUT_FILES:
     # print(training_data, np.shape(training_data))
     print(f"Processed {fileNumber} / {len(INPUT_FILES)} files.")
 
-print(f"File used: {len(training_data)}, Max bin: {max(binNumber)}")
-print(f"File not used: {fileNotUsed}")
 print("Finished processing files")
+np.save("training_data_1.npy", training_data)
+print("Finished saving.")
+print(f"File used: {len(training_data)}")
+print(f"File not used: {fileNotUsed}")
 print(f"Crystal system distribution: {types}")
+print(f"Space Group distribution: {spgrp_dis}")
 # print("Now preparing training data")
 #
 # for i in range(len(training_data)):
@@ -201,7 +212,3 @@ print(f"Crystal system distribution: {types}")
 # for i in range(len(training_data)):
 # print(training_data[0][0], training_data[0][1])
 # print(training_data)
-
-np.save("training_data_5.npy", training_data)
-print(spgrp_dis)
-print("Finished saving.")
