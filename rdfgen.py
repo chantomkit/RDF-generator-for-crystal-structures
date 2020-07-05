@@ -7,14 +7,14 @@ INPUT_FILES = listdir("./INPUT")
 fileNumber = 0
 fileNotUsed = 0
 training_data = []
-binNumber = np.array([])
 types = {"Triclinic": 0, "Monoclinic": 0, "Orthorhombic": 0, "Tetragonal": 0, "Trigonal": 0, "Hexagonal": 0, "Cubic": 0}
 spgrp_dis = np.zeros(230, dtype=int)
 
 
 for filename in INPUT_FILES:
-    # if fileNumber > 50:
-        # break
+    # if fileNumber < 814:
+    #     fileNumber += 1
+    #     continue
     lattice_cnst = 0
     # Basis vector of the unit cell of lattice [(x1, y1, z1), (x2, y2, z2), (x3, y3, z3)]
     lattice_vector = np.array([])
@@ -102,18 +102,30 @@ for filename in INPUT_FILES:
     count = np.zeros((binmax,), dtype=int)
     g = np.empty((binmax,), dtype=float)
 
-    def rCounter():
-        for x in range(binmax):
-            R = float(RMIN + x * dr)
-            if distance >= R and distance < (R + dr):
-                count[x] += 1
-                break
+    # def rCounter():
+    #     print(distance, RMAX, dr)
+    #     for x in range(binmax):
+    #         R = float(RMIN + x * dr)
+    #         if distance >= R and distance < (R + dr):
+    #             count[x] += 1
+    #             print(x, int(distance / dr))
+    #             break
+
 
     # Find separations of atoms and apply PBC
     for i in range(0, n):
+        for xShift in range(-1, 2):
+            for yShift in range(-1, 2):
+                for zShift in range(-1, 2):
+                    if [xShift, yShift, zShift] == [0,0,0]:
+                        continue
+                    cur_delta_r = np.dot([xShift, yShift, zShift], lattice_vector)
+                    distance = float(np.linalg.norm(cur_delta_r))
+                    if distance <= RMAX:
+                        count[int((distance - RMIN) / dr)] += 1
         for j in range(0, n):
             if i == j:
-                break
+                continue
             delta_r = np.empty((3,), dtype=float)
             for k in range(3):
                 delta_r[k] = r[i, k] - r[j, k]
@@ -128,10 +140,8 @@ for filename in INPUT_FILES:
                         cur_delta_r = delta_r + [xShift, yShift, zShift]
                         cur_delta_r = np.dot(cur_delta_r, lattice_vector)
                         distance = float(np.linalg.norm(cur_delta_r))
-                        rCounter()
-                        cur_delta_r = np.dot([xShift, yShift, zShift], lattice_vector)
-                        distance = float(np.linalg.norm(cur_delta_r))
-                        rCounter()
+                        if distance <= RMAX:
+                            count[int((distance - RMIN) / dr)] += 1
 
     if np.linalg.norm(count) == 0:
         # print(count)
@@ -143,6 +153,12 @@ for filename in INPUT_FILES:
         count_mod = 2 * count[x] / n
         g[x] = (L[0] * L[1] * L[2] / n) * (count_mod / (4 * math.pi * dr * (x * dr + RMIN)**2))
     g = g / np.sum(g)
+
+    # # Generate RDF plots in "OUTPUT"
+    # plt.plot(g)
+    # plt.title(f"{spaceGroup}")
+    # plt.savefig(f"OUTPUT/spgrp{spaceGroup}-graph{fileNumber}.png")
+    # plt.clf()
 
     # plt.plot(g)
     # plt.show()
@@ -172,11 +188,10 @@ for filename in INPUT_FILES:
     # print(training_data, np.shape(training_data))
     print(f"Processed {fileNumber} / {len(INPUT_FILES)} files.")
 
-print(f"File used: {len(training_data)}, Max bin: {max(binNumber)}")
-print(f"File not used: {fileNotUsed}")
 print("Finished processing files")
-print(f"Crystal system distribution: {types}")
-
-np.save("training_data_5.npy", training_data)
-print(spgrp_dis)
+np.save("training_data_1.npy", training_data)
 print("Finished saving.")
+print(f"File used: {len(training_data)}")
+print(f"File not used: {fileNotUsed}")
+print(f"Crystal system distribution: {types}")
+print(f"Space Group distribution: {spgrp_dis}")
