@@ -1,3 +1,4 @@
 As a mini project under the 2020 physics summer internship
-For VASP, it takes a directory "INPUT" of .vasp files as input.
-For matgen, it takes a .npy file with [[id, spacegroup], ...] as input.
+For PBC, it generates periodic boundary condition RDF
+For one layer, it generates cluster RDF with one (adjustable) layer of image cells around the center cell
+For auto layer, it generates full clutser RDF with auto filled layers around the center cell according to RMAX
