@@ -1,4 +1,4 @@
-As a mini project under the 2020 physics summer internship
+CUHK PHYSICS SUMMER INTERNSHIP PROGRAM 2020
 
 # ABANDONED
 - For RG2 strucutures:
